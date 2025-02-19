@@ -1,6 +1,7 @@
 import streamlit as st
 import openai
 import os
+import pdfkit
 
 # Set OpenAI API Key
 openai.api_key = "sk-proj"  # Replace with your actual API key
@@ -21,11 +22,9 @@ if uploaded_file is not None:
 #JD
 job_description = st.text_area("Step 2: Paste the Job Description (JD) here:", height=200)
 
-# Button to Optimize Resume
 if st.button("Optimize CV"):
     if job_description and md_resume:
         with st.spinner("🔄 Optimizing your CV... Please wait!"):
-            # OpenAI API call
             prompt = f"""
             I have a resume formatted in Markdown and a job description. \
             Please adapt my resume to better align with the job requirements while \
@@ -63,14 +62,29 @@ if st.button("Optimize CV"):
                 st.subheader("✅ Optimized CV:")
                 st.text_area("Modified CV (Markdown Format):", optimized_resume, height=300)
 
-                # Download Button
-                st.download_button(label="📥 Download Optimized CV",
-                                   data=optimized_resume,
-                                   file_name="Optimized_CV.md",
-                                   mime="text/markdown")
+                # Generate PDF
+                html_content = f"""
+                <html>
+                <head><meta charset='utf-8'></head>
+                <body>
+                <pre>{optimized_resume}</pre>
+                </body>
+                </html>
+                """
+
+                pdf_path = "Optimized_CV.pdf"
+                pdfkit.from_string(html_content, pdf_path)
+
+                # Provide download button
+                with open(pdf_path, "rb") as pdf_file:
+                    st.download_button(
+                        label="📥 Download Optimized CV (PDF)",
+                        data=pdf_file,
+                        file_name="Optimized_CV.pdf",
+                        mime="application/pdf"
+                    )
 
             except Exception as e:
                 st.error(f"❌ Error: {e}")
     else:
         st.warning("⚠️ Please enter both the Job Description and your CV!")
-
